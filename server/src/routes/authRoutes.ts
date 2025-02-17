@@ -1,6 +1,6 @@
 import express from 'express';
 import { body } from 'express-validator';
-import { register, verifyOTP, login, refreshToken, logout, protectedRoute } from '../controllers/authController';
+import { register, verifyOTP, login, refreshToken, logout, protectedRoute, forgotPassword, resetPassword } from '../controllers/authController';
 import { authenticateToken } from '../middleware/authMiddleware';
 import { validateRequest } from '../middleware/validationMiddleware';
 
@@ -54,6 +54,26 @@ router.post(
   [body('refreshToken').notEmpty().withMessage('Refresh token is required.')],
   validateRequest,
   logout
+);
+
+// Forgot password route.
+router.post(
+  '/forgot-password',
+  [body('email').isEmail().withMessage('Valid email is required.')],
+  validateRequest,
+  forgotPassword
+);
+
+// Reset password route.
+router.post(
+  '/reset-password',
+  [
+    body('email').isEmail().withMessage('Valid email is required.'),
+    body('otp').notEmpty().withMessage('OTP is required.'),
+    body('newPassword').isLength({ min: 6 }).withMessage('New password must be at least 6 characters.')
+  ],
+  validateRequest,
+  resetPassword
 );
 
 // Protected route.

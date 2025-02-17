@@ -50,4 +50,28 @@ export async function sendOTPEmail(email: string, otp: string, expiryMinutes: nu
     console.error('OTP Email Failed:', { email, error });
     throw new Error('Failed to send OTP email');
   }
+}
+
+/**
+ * Sends a password reset OTP email using a Handlebars template.
+ * @param email Recipient's email address.
+ * @param otp The OTP code.
+ * @param expiryMinutes Number of minutes until the OTP expires.
+ */
+export async function sendResetPasswordEmail(email: string, otp: string, expiryMinutes: number): Promise<void> {
+  try {
+    const template = await loadTemplate('resetPassword');
+    const html = template({ otp, expiryMinutes });
+    
+    await transport.sendMail({
+      from: `"Virtual Vanguards" <${process.env.EMAIL_FROM}>`,
+      to: email,
+      subject: 'Your Password Reset OTP',
+      html,
+      headers: { 'X-OTP-Context': 'password-reset' }
+    });
+  } catch (error) {
+    console.error('Reset Password Email Failed:', { email, error });
+    throw new Error('Failed to send reset password email');
+  }
 } 

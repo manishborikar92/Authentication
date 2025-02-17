@@ -4,8 +4,9 @@ import { config } from '../config/config';
 import User from '../models/User';
 import TempUser from '../models/TempUser';
 import RefreshToken from '../models/RefreshToken';
+import PasswordReset from '../models/PasswordReset';
 import { generateOTP, hashPassword, comparePassword, generateAccessToken, generateRefreshToken } from '../services/authService';
-import { sendOTPEmail } from '../services/emailService';
+import { sendOTPEmail, sendResetPasswordEmail } from '../services/emailService';
 import logger from '../utils/logger';
 
 /**
@@ -173,4 +174,86 @@ export const logout = async (req: Request, res: Response) => {
  */
 export const protectedRoute = (req: Request, res: Response) => {
   return res.json({ message: 'You have accessed a protected route!', user: (req as any).user });
+};
+
+/**
+ * POST /api/auth/forgot-password
+ * Initiates a password reset by generating an OTP and sending it to the user's email.
+ */
+export const forgotPassword = async (req: Request, res: Response) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ message: 'Email is required.' });
+  }
+  try {
+    const user = await User.findOne({ email });
+    // For security reasons, do not reveal if the user exists.
+    if (!user) {
+      return res.status(200).json({ message: 'If that email exists, an OTP has been sent.' });
+    }
+    // Generate OTP and expiration.
+    const otp = generateOTP();
+    const otpExpires = new Date(Date.now() + config.otpExpirationMinutes * 60 * 1000);
+    
+    // Check/update existing password reset request.
+    let passwordReset = await PasswordReset.findOne({ email });
+    if (passwordReset) {
+      passwordReset.otp = otp;
+      passwordReset.otpExpires = otpExpires;
+      await passwordReset.save();
+    } else {
+      passwordReset = new PasswordReset({ email, otp, otpExpires });
+      await passwordReset.save();
+    }
+    
+    // Send the password reset email.
+    await sendResetPasswordEmail(email, otp, config.otpExpirationMinutes);
+    return res.status(200).json({ message: 'If that email exists, an OTP has been sent.' });
+  } catch (error) {
+    logger.error('Forgot password error: %o', error);
+    return res.status(500).json({ message: 'Error initiating password reset.' });
+  }
+};
+
+/**
+ * POST /api/auth/reset-password
+ * Resets the user's password after verifying the OTP.
+ */
+export const resetPassword = async (req: Request, res: Response) => {
+  const { email, otp, newPassword } = req.body;
+  if (!email || !otp || !newPassword) {
+    return res.status(400).json({ message: 'Email, OTP, and new password are required.' });
+  }
+  try {
+    const passwordReset = await PasswordReset.findOne({ email });
+    if (!passwordReset) {
+      return res.status(400).json({ message: 'No password reset request found for this email.' });
+    }
+    if (new Date() > passwordReset.otpExpires) {
+      await PasswordReset.deleteOne({ email });
+      return res.status(400).json({ message: 'OTP expired. Please request a new one.' });
+    }
+    if (passwordReset.otp !== otp) {
+      return res.status(400).json({ message: 'Invalid OTP.' });
+    }
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: 'User not found.' });
+    }
+    // Validate that the new password is different from the current one.
+    const isSamePassword = await comparePassword(newPassword, user.passwordHash);
+    if (isSamePassword) {
+      return res.status(400).json({ message: 'New password must be different from the current password.' });
+    }
+    // Update the user's password.
+    const passwordHash = await hashPassword(newPassword);
+    user.passwordHash = passwordHash;
+    await user.save();
+    // Remove the password reset record.
+    await PasswordReset.deleteOne({ email });
+    return res.status(200).json({ message: 'Password has been reset successfully.' });
+  } catch (error) {
+    logger.error('Reset password error: %o', error);
+    return res.status(500).json({ message: 'Error resetting password.' });
+  }
 };
