@@ -112,7 +112,7 @@ http://localhost:5000/api/auth
   accessToken: string;          // JWT access token
   refreshToken: string;         // JWT refresh token
   expiresIn: string;           // Access token expiration (e.g. "15m")
-  refreshTokenExpiry: Date;     // Refresh token expiration date
+  refreshTokenExpiry: Date;     // Refresh token expiration date (e.g. "2025-02-27T16:43:44.454Z")
 }
 ```
 
@@ -145,8 +145,8 @@ http://localhost:5000/api/auth
 {
   accessToken: string;          // New JWT access token
   refreshToken: string;         // New JWT refresh token
-  expiresIn: string;           // Access token expiration
-  refreshTokenExpiry: Date;     // Refresh token expiration date
+  expiresIn: string;           // Access token expiration (e.g. "15m")
+  refreshTokenExpiry: Date;     // Refresh token expiration date (e.g. "2025-02-27T16:43:44.454Z")
 }
 ```
 

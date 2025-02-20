@@ -225,7 +225,7 @@ advanced-auth-system/
 ## Security Considerations
 
 - **CORS:**  
-  The backend is configured using the `cors` middleware to allow requests from the frontend’s origin (e.g., `http://localhost:5173`).
+  The backend is configured using the `cors` middleware to allow requests from the frontend's origin (e.g., `http://localhost:5173`).
 
 - **Input Validation & Sanitization:**  
   Uses `express-validator` for validating inputs and `express-mongo-sanitize` to prevent NoSQL injection attacks.
@@ -237,7 +237,11 @@ advanced-auth-system/
   Implemented using `express-rate-limit` to mitigate brute force and DDoS attacks.
 
 - **Token Security:**  
-  Access tokens (short-lived) and refresh tokens (long-lived) are managed securely. In production, consider using httpOnly cookies for additional security.
+  - Access tokens (short-lived) with 'api:access' audience
+  - Refresh tokens (long-lived) with 'api:refresh' audience
+  - Refresh tokens stored in database with expiration tracking
+  - Automatic token rotation on refresh
+  - Old refresh tokens invalidated when new ones are issued
 
 - **Logging:**  
   Winston is used for centralized logging, which can be extended to include file or remote transports.
