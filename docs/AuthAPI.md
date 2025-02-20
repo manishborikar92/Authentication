@@ -5,7 +5,7 @@ This document outlines the authentication endpoints and their usage for the API 
 
 ## Base URL
 ```
-http://localhost:3000/api/auth
+http://localhost:5000/api/auth
 ```
 
 ## Authentication Flow
@@ -14,13 +14,16 @@ http://localhost:3000/api/auth
 3. User logs in to receive access and refresh tokens
 4. Access token is used for API requests
 5. Refresh token is used to obtain new access tokens
-6. User can logout to invalidate tokens
+6. System automatically logs out users and navigates to login page when refresh token expires
 
 ## Token Management
-- Access tokens are short-lived JWT tokens (15 minutes)
-- Refresh tokens are long-lived JWT tokens (7 days)
-- System automatically logs out users when refresh token expires
+- Access tokens are short-lived JWT tokens (15 minutes) with 'api:access' audience
+- Refresh tokens are long-lived JWT tokens (7 days) with 'api:refresh' audience
+- System automatically handles token refresh when access token expires
 - All protected routes require `Authorization: Bearer <access_token>` header
+- Refresh tokens are stored in database with expiration dates
+- Each refresh token operation generates a new refresh token pair
+- Old refresh tokens are automatically invalidated when new ones are issued
 
 ## API Endpoints
 
@@ -39,7 +42,7 @@ http://localhost:3000/api/auth
 **Success Response:** (201)
 ```typescript
 {
-  message: string;  // "Registration initiated. OTP sent to your email."
+  message: "Registration initiated. OTP sent to your email."
 }
 ```
 
@@ -106,8 +109,10 @@ http://localhost:3000/api/auth
 **Success Response:** (200)
 ```typescript
 {
-  accessToken: string;   // JWT access token
-  refreshToken: string;  // JWT refresh token
+  accessToken: string;          // JWT access token
+  refreshToken: string;         // JWT refresh token
+  expiresIn: string;           // Access token expiration (e.g. "15m")
+  refreshTokenExpiry: Date;     // Refresh token expiration date
 }
 ```
 
@@ -138,7 +143,10 @@ http://localhost:3000/api/auth
 **Success Response:** (200)
 ```typescript
 {
-  accessToken: string;  // New JWT access token
+  accessToken: string;          // New JWT access token
+  refreshToken: string;         // New JWT refresh token
+  expiresIn: string;           // Access token expiration
+  refreshTokenExpiry: Date;     // Refresh token expiration date
 }
 ```
 
@@ -146,11 +154,18 @@ http://localhost:3000/api/auth
 - 403: Forbidden
   ```typescript
   {
-    message: "Refresh token not found." |
-             "Refresh token expired. Please log in again." |
-             "Invalid refresh token."
+    message: "Refresh token is required" |
+             "Refresh token expired" |
+             "Invalid refresh token",
+    code: "REFRESH_TOKEN_REQUIRED" |
+          "REFRESH_TOKEN_EXPIRED" |
+          "INVALID_REFRESH_TOKEN"
   }
   ```
+Note: When receiving "REFRESH_TOKEN_EXPIRED", the system will:
+- Clear auth state (tokens and user data)
+- Redirect to login page
+- Require user to log in again
 
 ### 5. Logout
 **Endpoint:** `POST /logout`
@@ -166,10 +181,22 @@ http://localhost:3000/api/auth
 ```typescript
 {
   message: "Logged out successfully."
+  code: "LOGOUT_SUCCESS"
 }
 ```
 
 **Error Responses:**
+- 400: Bad Request
+  ```typescript
+  {
+    message: "Refresh token is required." |
+             "Refresh token expired." |
+             "Invalid refresh token.",
+    code: "REFRESH_TOKEN_REQUIRED" |
+          "REFRESH_TOKEN_EXPIRED" |
+          "INVALID_REFRESH_TOKEN"
+  }
+  ```
 - 500: Server Error
   ```typescript
   {
@@ -239,41 +266,47 @@ http://localhost:3000/api/auth
   }
   ```
 
-### 8. Protected Route Example
-**Endpoint:** `GET /protected`
+## Error Handling
 
-**Headers Required:**
+### Token Errors
+1. Access Token Errors (401):
 ```typescript
 {
-  Authorization: "Bearer <access_token>"
+  message: string;
+  code: 'ACCESS_TOKEN_REQUIRED' |
+        'INVALID_TOKEN_TYPE' |
+        'USER_NOT_FOUND' |
+        'TOKEN_EXPIRED' |
+        'INVALID_TOKEN';
 }
 ```
 
-**Success Response:** (200)
+2. Refresh Token Errors (403):
 ```typescript
 {
-  message: "You have accessed a protected route!",
-  user: {
-    id: string;
-    name: string;
-    email: string;
-  }
+  message: string;
+  code: 'REFRESH_TOKEN_REQUIRED' |
+        'INVALID_TOKEN_TYPE' |
+        'INVALID_REFRESH_TOKEN' |
+        'REFRESH_TOKEN_EXPIRED';
 }
 ```
 
-**Error Responses:**
-- 401: Unauthorized
-  ```typescript
-  {
-    message: "Access token is required." |
-             "Invalid token."
-  }
-  ```
+### System Behavior
+- On `TOKEN_EXPIRED`: Frontend should attempt token refresh
+- On `REFRESH_TOKEN_EXPIRED`: System will:
+  - Clear auth state
+  - Redirect to login
+  - Require re-authentication
+- On `INVALID_TOKEN_TYPE`: System will reject the request
+- On other errors: Display appropriate error message
 
 ## Notes
-1. All error responses follow the same structure with a `message` property.
-2. OTP expiration time is configurable (default in minutes).
-3. Password requirements: minimum 6 characters.
-4. Access tokens and refresh tokens are JWT-based.
-5. All protected routes require the Authorization header with a valid access token.
+1. All error responses follow the same structure with a `message` property
+2. OTP expiration time is configurable (default in minutes)
+3. Password requirements: minimum 6 characters
+4. Access tokens and refresh tokens are JWT-based
+5. All protected routes require the Authorization header with a valid access token
+6. System handles concurrent requests during token refresh
+7. Automatic logout and redirect occurs on refresh token expiration
 
