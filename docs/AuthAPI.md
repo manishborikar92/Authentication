@@ -1,21 +1,28 @@
 # Authentication API Documentation
 
+## Overview
+This document outlines the authentication endpoints and their usage for the API service.
+
 ## Base URL
 ```
 http://localhost:3000/api/auth
 ```
-## Workflow
-1. Register User
-2. Verify OTP
-3. Login
-4. Refresh Token
-5. Logout
-6. Forgot Password
-7. Reset Password
 
-- User should authmatically logout if the refresh token is expired
+## Authentication Flow
+1. User registers with email/password
+2. User verifies email via OTP
+3. User logs in to receive access and refresh tokens
+4. Access token is used for API requests
+5. Refresh token is used to obtain new access tokens
+6. User can logout to invalidate tokens
 
-## Endpoints
+## Token Management
+- Access tokens are short-lived JWT tokens (15 minutes)
+- Refresh tokens are long-lived JWT tokens (7 days)
+- System automatically logs out users when refresh token expires
+- All protected routes require `Authorization: Bearer <access_token>` header
+
+## API Endpoints
 
 ### 1. Register User
 **Endpoint:** `POST /register`
