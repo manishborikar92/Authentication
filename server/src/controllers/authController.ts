@@ -93,29 +93,28 @@ export const verifyOTP = async (req: Request, res: Response) => {
 export const login = async (req: Request, res: Response) => {
   const { email, password } = req.body;
   if (!email || !password) {
-    return res.status(400).json({ message: 'Email and password are required.' });
+    return res.status(400).json({ 
+      message: 'Email and password are required',
+      code: 'INVALID_INPUT'
+    });
   }
   try {
     const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(400).json({ message: 'Invalid credentials.' });
-    }
-    const isValid = await comparePassword(password, user.passwordHash);
-    if (!isValid) {
-      return res.status(400).json({ message: 'Invalid credentials.' });
+    if (!user || !(await comparePassword(password, user.passwordHash))) {
+      return res.status(400).json({ 
+        message: 'Invalid credentials',
+        code: 'INVALID_CREDENTIALS'
+      });
     }
 
-    // Generate access token
     const accessToken = generateAccessToken({ 
       id: user._id, 
       name: user.name, 
       email: user.email 
     });
 
-    // Generate and save refresh token
     const { token: refreshToken, expires } = await createRefreshToken(user._id);
 
-    // Return both tokens
     return res.json({ 
       accessToken, 
       refreshToken,
@@ -134,21 +133,23 @@ export const login = async (req: Request, res: Response) => {
  */
 export const refreshToken = async (req: Request, res: Response) => {
   try {
-    const userId = req.user.id; // Set by verifyRefreshToken middleware
+    const userId = req.user.id;
     const { refreshToken: oldToken } = req.body;
 
-    // Get user data
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(401).json({ message: 'User not found' });
+      return res.status(401).json({ 
+        message: 'User not found',
+        code: 'USER_NOT_FOUND'
+      });
     }
 
-    // Generate new tokens
     const accessToken = generateAccessToken({ 
       id: user._id, 
       name: user.name, 
       email: user.email 
     });
+
     const { token: newRefreshToken, expires } = await createRefreshToken(user._id);
 
     // Remove old refresh token

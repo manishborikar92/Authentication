@@ -49,6 +49,9 @@ export const generateRefreshToken = (payload: object): string => {
  * Create and save a new refresh token
  */
 export const createRefreshToken = async (userId: string): Promise<{ token: string, expires: Date }> => {
+  // Delete any existing refresh tokens for this user
+  await revokeAllRefreshTokens(userId);
+
   const refreshTokenValue = generateRefreshToken({ id: userId });
   const expiresIn = parseInt(config.refreshTokenExpiresIn) * 24 * 60 * 60 * 1000 || 7 * 24 * 60 * 60 * 1000;
   const expires = new Date(Date.now() + expiresIn);

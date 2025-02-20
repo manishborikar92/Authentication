@@ -54,6 +54,7 @@ router.post(
   '/logout',
   [body('refreshToken').notEmpty().withMessage('Refresh token is required.')],
   validateRequest,
+  verifyRefreshToken,
   logout
 );
 
