@@ -1,7 +1,7 @@
 import express from 'express';
 import { body } from 'express-validator';
-import { register, verifyOTP, login, refreshToken, logout, protectedRoute, forgotPassword, resetPassword } from '../controllers/authController';
-import { authenticateToken } from '../middleware/authMiddleware';
+import { register, verifyOTP, login, refreshToken, logout, forgotPassword, resetPassword } from '../controllers/authController';
+import { authenticateToken, verifyRefreshToken } from '../middleware/authMiddleware';
 import { validateRequest } from '../middleware/validationMiddleware';
 
 const router = express.Router();
@@ -40,11 +40,12 @@ router.post(
   login
 );
 
-// Refresh token.
+// Refresh token route with verification middleware
 router.post(
   '/refresh-token',
   [body('refreshToken').notEmpty().withMessage('Refresh token is required.')],
   validateRequest,
+  verifyRefreshToken,
   refreshToken
 );
 
@@ -76,7 +77,9 @@ router.post(
   resetPassword
 );
 
-// Protected route.
-router.get('/protected', authenticateToken, protectedRoute);
+// Protected route example
+router.get('/me', authenticateToken, async (req, res) => {
+  res.json({ user: req.user });
+});
 
 export default router;

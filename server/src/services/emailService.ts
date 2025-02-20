@@ -66,7 +66,7 @@ export async function sendResetPasswordEmail(email: string, otp: string, expiryM
     await transport.sendMail({
       from: `"Virtual Vanguards" <${process.env.EMAIL_FROM}>`,
       to: email,
-      subject: 'Your Password Reset OTP',
+      subject: 'Your Password Reset Code',
       html,
       headers: { 'X-OTP-Context': 'password-reset' }
     });
