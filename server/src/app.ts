@@ -5,11 +5,12 @@ import rateLimit from 'express-rate-limit';
 import mongoSanitize from 'express-mongo-sanitize';
 import authRoutes from './routes/authRoutes';
 import { errorHandler } from './middleware/errorHandler';
+import { config } from './config/config';
 
 const app = express();
 
 // Enable CORS: allow requests from your frontend origin.
-app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
+app.use(cors({ origin: config.corsOrigin, credentials: true }));
 
 // Set security-related HTTP headers.
 app.use(helmet());
