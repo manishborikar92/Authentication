@@ -110,7 +110,7 @@ const PasswordReset = () => {
                   <span className="animate-spin inline-block w-4 h-4 border-[3px] border-current border-t-transparent rounded-full" />
                   Sending OTP...
                 </>
-              ) : 'Send Reset Link'}
+              ) : 'Send OTP'}
             </button>
           </form>
         ) : (

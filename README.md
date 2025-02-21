@@ -30,7 +30,8 @@ A production-ready authentication system featuring advanced security measures, t
 - **Secure Login:**  
   Password hashing using bcrypt, and JWT-based authentication.
 - **Token Management:**  
-  Issues both short-lived access tokens and long-lived refresh tokens.
+  Issues both short-lived access tokens and long-lived refresh tokens.  
+  New feature: Automatic token refresh and handling of token expiration.
 - **Token Refresh & Logout:**  
   Refresh token endpoint to renew access tokens; logout endpoint clears refresh tokens.
 - **Robust Security:**  
@@ -143,13 +144,18 @@ advanced-auth-system/
 3. **Create a `.env` file** in the `backend` root with the following content (adjust values as needed):
 
    ```env
-   PORT=5000
-   JWT_SECRET=your_jwt_secret_here
-   JWT_EXPIRES_IN=15m
-   REFRESH_TOKEN_EXPIRES_IN=7d
-   OTP_EXPIRATION_MINUTES=5
-   BCRYPT_SALT_ROUNDS=10
-   MONGO_URI=mongodb://localhost:27017/advanced_auth_system
+  PORT=5000
+  JWT_SECRET=your_jwt_secret_here
+  OTP_SECRET=your_otp_secret_here
+  JWT_EXPIRES_IN=15m
+  REFRESH_TOKEN_EXPIRES_IN=7d
+  OTP_EXPIRATION_MINUTES=5
+  BCRYPT_SALT_ROUNDS=10
+  MONGO_URI=mongodb://localhost:27017/advanced_auth_system
+  CORS_ORIGIN=http://localhost:3000
+  GMAIL_USER=your_gmail_username_here
+  GMAIL_APP_PASSWORD=your_gmail_app_password_here
+  EMAIL_FROM=your_email_from_here
    ```
 
 4. **Run the backend** in development mode:
@@ -189,7 +195,7 @@ advanced-auth-system/
    npm run dev
    ```
 
-   The frontend application will be available at `http://localhost:5173`.
+   The frontend application will be available at `http://localhost:3000`.
 
 ---
 
@@ -225,7 +231,7 @@ advanced-auth-system/
 ## Security Considerations
 
 - **CORS:**  
-  The backend is configured using the `cors` middleware to allow requests from the frontend's origin (e.g., `http://localhost:5173`).
+  The backend is configured using the `cors` middleware to allow requests from the frontend's origin (e.g., `http://localhost:3000`).
 
 - **Input Validation & Sanitization:**  
   Uses `express-validator` for validating inputs and `express-mongo-sanitize` to prevent NoSQL injection attacks.
@@ -261,8 +267,3 @@ This project is licensed under the MIT License.
 ---
 
 *Note:* In a production environment, ensure that environment variables and sensitive secrets are securely managed. Additionally, consider using HTTPS and integrating a robust email/SMS service for OTP delivery.
-```
-
----
-
-This `README.md` covers the project overview, features, setup instructions for both backend and frontend, usage guidelines, security considerations, and contribution information.
