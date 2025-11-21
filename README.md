@@ -144,18 +144,18 @@ advanced-auth-system/
 3. **Create a `.env` file** in the `backend` root with the following content (adjust values as needed):
 
    ```env
-  PORT=5000
-  JWT_SECRET=your_jwt_secret_here
-  OTP_SECRET=your_otp_secret_here
-  JWT_EXPIRES_IN=15m
-  REFRESH_TOKEN_EXPIRES_IN=7d
-  OTP_EXPIRATION_MINUTES=5
-  BCRYPT_SALT_ROUNDS=10
-  MONGO_URI=mongodb://localhost:27017/advanced_auth_system
-  CORS_ORIGIN=http://localhost:3000
-  GMAIL_USER=your_gmail_username_here
-  GMAIL_APP_PASSWORD=your_gmail_app_password_here
-  EMAIL_FROM=your_email_from_here
+    PORT=5000
+    JWT_SECRET=your_jwt_secret_here
+    OTP_SECRET=your_otp_secret_here
+    JWT_EXPIRES_IN=15m
+    REFRESH_TOKEN_EXPIRES_IN=7d
+    OTP_EXPIRATION_MINUTES=5
+    BCRYPT_SALT_ROUNDS=10
+    MONGO_URI=mongodb://localhost:27017/advanced_auth_system
+    CORS_ORIGIN=http://localhost:3000
+    GMAIL_USER=your_gmail_username_here
+    GMAIL_APP_PASSWORD=your_gmail_app_password_here
+    EMAIL_FROM=your_email_from_here
    ```
 
 4. **Run the backend** in development mode:
